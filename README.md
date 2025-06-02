@@ -149,8 +149,8 @@ Required environment variables:
 
 ## License
 
-[Add your license information here]
+Apache License 2.0
 
 ## Contributors
 
-[Add contributor information here]
+Abdul Wadud Abbasi, Pharm.D.c
