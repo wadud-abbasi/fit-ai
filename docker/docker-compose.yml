@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Dual database configuration for FIT kit tracking
+      - DATABASE_URL_PUBLIC=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db_public:5432/fitkit_public
+      - DATABASE_URL_PRIVATE=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD_PRIVATE}@db_private:5432/fitkit_private
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DEBUG=False
+      # API Key for administrative endpoints
+      - API_KEY=${API_KEY}
+    depends_on:
+      - db_public
+      - db_private
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+  
+  # Public database for non-PHI tracking data
+  db_public:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_public_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=fitkit_public
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d fitkit_public"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "5432:5432"
+  
+  # Private database for PHI/demographic data
+  db_private:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_private_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_PRIVATE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=fitkit_private
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d fitkit_private"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "5433:5432"
+
+  # Optional pgAdmin container for database management
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_public_data:  # For public FIT kit tracking data
+  postgres_private_data:  # For private PHI data
+  pgadmin_data:

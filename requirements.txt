@@ -1,0 +1,27 @@
+flask==2.3.3
+# Core dependencies
+twilio==8.5.0
+openai==1.8.0
+python-dotenv==1.0.0
+requests==2.31.0
+psycopg2-binary==2.9.9
+
+# TTS and Speech packages
+TTS==0.18.0
+Coqui-TTS==0.18.0
+numpy==1.24.3
+torch==2.0.1
+numba==0.58.1
+
+# For audio processing
+librosa==0.10.1
+SoundFile==0.12.1
+
+# Security packages for HIPAA compliance
+flask-talisman==1.0.0
+cryptography==41.0.4
+pyjwt==2.8.0
+auditlog3==1.0.1
+
+# UUID handling
+python-uuid==1.30
